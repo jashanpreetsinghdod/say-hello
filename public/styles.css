@@ -149,7 +149,10 @@ img { max-width: 100%; display: block; }
 }
 .sq:active { transform: scale(.97); }
 .sq:not(.done):hover { border-color: #ffb3c6; }
-.sq.generic { background: var(--soft); }
+.sq.empty { background: var(--soft); border-style: dashed; cursor: default; opacity: .7; }
+.sq.empty .sq-emoji { font-size: 1.6em; filter: grayscale(1); }
+.lobby { display: grid; gap: 4px; background: var(--lav); color: #5b3fb3; border-radius: 12px; padding: 12px 14px; font-size: 13px; margin-bottom: 12px; }
+.lobby b { font-size: 15px; }
 .sq.done { background: var(--grad); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(255, 46, 99, .25); }
 .sq-text { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
 .sq.done .sq-text { font-size: .82em; opacity: .9; -webkit-line-clamp: 2; }

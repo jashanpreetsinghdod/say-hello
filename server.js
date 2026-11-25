@@ -29,22 +29,10 @@ const QUESTIONS = [
 ];
 const Q = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 
-// Fallback squares while the room is still small. Any other player's code unlocks them.
-const GENERIC = [
-  'Find someone who speaks 3+ languages',
-  'Find someone wearing something black',
-  'Find someone who has a pet',
-  'Find someone who took a train to get here',
-  'Find someone born in the same month as you',
-  'Find someone who can sing a line of a song',
-  'Find someone who has been to the Himalayas',
-  'Find someone left-handed',
-  'Find someone who has a sibling',
-  'Find someone who has tried paragliding',
-  'Find someone who can cook something',
-  'Find someone who plays an instrument',
-];
-const GENERIC_STARTER = 'Ask {n} the story behind it.';
+// A card only ever holds squares about real people in the room. Below MIN_PLAYERS the card is locked.
+// Squares fill the main diagonal first, so a complete line is possible as soon as the room is playable.
+const MIN_PLAYERS = 3;
+const SLOT_ORDER = [4, 0, 8, 2, 6, 1, 7, 3, 5];
 
 // ---------- stats (persisted so restarts keep the numbers) ----------
 let stats = { rooms: 0, players: 0, connections: 0, bingos: 0, since: new Date().toISOString() };
@@ -107,13 +95,15 @@ function factSquare(f) {
   return { kind: 'fact', key: f.key, q: f.q.id, norm: norm(f.v), v, owner: f.owner, text: fill(f.q.square, v, ''), done: false };
 }
 function refillCard(room, p) {
+  // Below the minimum, every square stays locked. We never invent squares that aren't about real people here.
+  if (room.players.size < MIN_PLAYERS) return;
   const used = new Set(p.card.filter((s) => s.kind === 'fact').map((s) => s.key));
   const perOwner = {};
   for (const s of p.card) if (s.owner) perOwner[s.owner] = (perOwner[s.owner] || 0) + 1;
   const pool = factPool(room, p).filter((f) => !used.has(f.key));
-  for (let i = 0; i < p.card.length; i++) {
+  for (const i of SLOT_ORDER) {
     const s = p.card[i];
-    if (s.done || s.kind !== 'generic') continue;
+    if (s.done || s.kind !== 'empty') continue;
     // Never put more single-person squares on a card than that person is allowed to fill.
     const idx = pool.findIndex((f) => (perOwner[f.owner] || 0) < MAX_SQUARES_PER_PERSON);
     if (idx < 0) break;
@@ -123,7 +113,7 @@ function refillCard(room, p) {
   }
 }
 function newCard() {
-  return shuffle([...GENERIC]).slice(0, CARD_SIZE).map((text) => ({ kind: 'generic', text, done: false }));
+  return Array.from({ length: CARD_SIZE }, () => ({ kind: 'empty', text: 'Waiting for more people to join…', done: false }));
 }
 const LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
 const hasLine = (card) => LINES.some((l) => l.every((i) => card[i].done));
@@ -133,13 +123,13 @@ function publicState(room) {
   const players = [...room.players.values()]
     .map((p) => ({ id: p.id, name: p.name, emoji: p.emoji, score: p.card.filter((s) => s.done).length, met: p.met.size, bingo: p.bingoAt || 0 }))
     .sort((a, b) => (a.bingo && b.bingo ? a.bingo - b.bingo : (b.bingo ? 1 : 0) - (a.bingo ? 1 : 0)) || b.met - a.met || b.score - a.score);
-  return { code: room.code, count: players.length, players: players.slice(0, 20), events: room.events.slice(-8).reverse() };
+  return { code: room.code, count: players.length, minPlayers: MIN_PLAYERS, players: players.slice(0, 20), events: room.events.slice(-8).reverse() };
 }
 function meState(p) {
   return {
     id: p.id, name: p.name, emoji: p.emoji, code: p.code,
     score: p.card.filter((s) => s.done).length, met: p.met.size, bingo: !!p.bingoAt,
-    card: p.card.map((s) => ({ text: s.text, done: s.done, generic: s.kind === 'generic', byName: s.byName, byEmoji: s.byEmoji, starter: s.starter })),
+    card: p.card.map((s) => ({ text: s.text, done: s.done, empty: s.kind === 'empty', byName: s.byName, byEmoji: s.byEmoji, starter: s.starter })),
   };
 }
 
@@ -186,6 +176,7 @@ function tryClaim(room, p, body) {
   const s = p.card[slot];
   if (!Number.isInteger(slot) || !s) throw httpErr(400, 'Bad square');
   if (s.done) return { ok: false, msg: 'You already unlocked this one.' };
+  if (s.kind === 'empty') return { ok: false, msg: `This square unlocks when more people join (${MIN_PLAYERS}+ needed).` };
   const code = String(body.code || '').replace(/\D/g, '');
   const o = [...room.players.values()].find((x) => x.code === code && x.id !== p.id);
   if (code === p.code) return { ok: false, msg: "That's your own code 😄 Go find someone else!" };
@@ -198,7 +189,7 @@ function tryClaim(room, p, body) {
   if (already >= MAX_SQUARES_PER_PERSON) {
     return { ok: false, msg: `${o.name} already filled ${MAX_SQUARES_PER_PERSON} of your squares. Find someone new!` };
   }
-  const starterTpl = s.kind === 'fact' ? Q[s.q].starter : GENERIC_STARTER;
+  const starterTpl = Q[s.q].starter;
   Object.assign(s, { done: true, by: o.id, byName: o.name, byEmoji: o.emoji, starter: fill(starterTpl, s.v || '', o.name) });
   if (!p.met.has(o.id)) { p.met.add(o.id); bump('connections'); }
   let bingo = false;

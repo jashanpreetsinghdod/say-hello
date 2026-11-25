@@ -166,12 +166,21 @@ function renderGame(st) {
   $('#gRoom').textContent = st.code;
   $('#gCount').textContent = st.count;
   $('#grid').replaceChildren(...me.card.map((s, i) => h('button', {
-    type: 'button', class: 'sq' + (s.done ? ' done' : '') + (s.generic ? ' generic' : ''), onclick: () => openSquare(i, s),
-  }, s.done
+    type: 'button', class: 'sq' + (s.done ? ' done' : '') + (s.empty ? ' empty' : ''), onclick: () => openSquare(i, s),
+  }, s.empty
+    ? [h('span', { class: 'sq-emoji' }, '🔒')]
+    : s.done
     ? [h('span', { class: 'sq-emoji' }, s.byEmoji), h('span', { class: 'sq-text' }, s.text), h('span', { class: 'sq-by' }, s.byName)]
     : h('span', { class: 'sq-text' }, s.text))));
-  const left = st.count <= 1 ? ' · Waiting for others to join…' : '';
-  $('#progText').textContent = `${me.score}/9 squares · met ${me.met} ${me.met === 1 ? 'person' : 'people'}${me.bingo ? ' · BINGO 🎉' : ''}${left}`;
+  const live = me.card.filter((s) => !s.empty).length;
+  const need = st.minPlayers - st.count;
+  const lobby = $('#lobby');
+  lobby.hidden = need <= 0;
+  if (need > 0) {
+    lobby.replaceChildren(h('b', {}, `Waiting for ${need} more ${need === 1 ? 'person' : 'people'}`),
+      h('span', {}, `Your card is built from real people in the room, so it unlocks at ${st.minPlayers} players. Show the QR below!`));
+  }
+  $('#progText').textContent = need > 0 ? '' : `${me.score}/${live} squares · met ${me.met} ${me.met === 1 ? 'person' : 'people'}${me.bingo ? ' · BINGO 🎉' : ''}`;
   renderBoard($('#board'), st.players, me.id);
   renderFeed($('#feed'), st.events);
   if (me.bingo && lastBingo === false) celebrate();
@@ -188,6 +197,7 @@ function renderFeed(el, events) {
   el.replaceChildren(...events.map((ev) => h('li', {}, ev.text)));
 }
 function openSquare(i, s) {
+  if (s.empty) return toast('Locked until more people join. Share the QR!');
   if (s.done) return openModal(resultView({ other: { name: s.byName, emoji: s.byEmoji }, starter: s.starter, text: s.text }));
   const input = h('input', { class: 'code-input', inputmode: 'numeric', pattern: '[0-9]*', maxlength: 4, placeholder: '0000', autocomplete: 'off', 'aria-label': 'Their 4-digit code' });
   const err = h('p', { class: 'err', hidden: true });
@@ -212,7 +222,7 @@ function openSquare(i, s) {
   },
   h('p', { class: 'script sm' }, 'find'),
   h('h3', { class: 'sq-title' }, s.text),
-  h('p', { class: 'muted' }, s.generic ? 'Anyone who fits counts. Ask around!' : 'Walk around and ask people. When you find them, ask for the 4-digit code on their screen.'),
+  h('p', { class: 'muted' }, 'Walk around and ask people. When you find them, ask for the 4-digit code on their screen.'),
   input, err, btn);
   openModal(form);
 }
