@@ -42,7 +42,7 @@ function show(name) {
   document.body.dataset.view = name;
   const tr = $('#topRight');
   if (roomCode && (name === 'game' || name === 'join')) tr.replaceChildren(h('span', { class: 'pill' }, 'ROOM ', h('b', {}, roomCode)));
-  else tr.replaceChildren(h('span', { class: 'pill' }, 'BY ', h('b', {}, 'goSTOPS')));
+  else tr.replaceChildren(h('span', { class: 'pill' }, 'SAY ', h('b', {}, 'HELLO'), ' 👋'));
   window.scrollTo(0, 0);
 }
 function toast(msg) {
