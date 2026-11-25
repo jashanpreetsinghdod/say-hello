@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ff2e63">
+  <title>Say Hello · a goSTOPS common-room game</title>
+  <meta name="description" content="Scan, answer 4 questions, and hunt down the people on your bingo card. No app, no sign-up.">
+  <meta property="og:title" content="Say Hello 👋 Room Bingo">
+  <meta property="og:description" content="Your next friend is in this room. Scan and play, no app or sign-up.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👋</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="/" aria-label="Say Hello home">
+      <span class="logo-mark">👋</span>
+      <span class="logo-text">say<b><i class="c1">H</i><i class="c2">E</i><i class="c3">L</i><i class="c4">L</i><i class="c5">O</i></b></span>
+    </a>
+    <div id="topRight"><span class="pill">BY <b>goSTOPS</b></span></div>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <section id="view-home" class="view">
+      <div class="hero"><div class="hero-art" aria-hidden="true"></div></div>
+      <div class="wrap center">
+        <h1 class="display"><span class="ink">SAY THE FIRST</span><span class="pink">HELLO</span></h1>
+        <p class="lead">A 10-minute game for a room full of strangers. Scan, answer 4 questions, then hunt down the real people on your bingo card.</p>
+        <button id="btnCreate" class="btn btn-primary">Start a room <span class="chev">»</span></button>
+        <form id="formCode" class="code-form" autocomplete="off">
+          <input id="inpCode" maxlength="4" placeholder="ROOM CODE" autocapitalize="characters" aria-label="Room code">
+          <button class="btn btn-outline" type="submit">Join</button>
+        </form>
+      </div>
+      <div class="soft">
+        <div class="wrap center">
+          <p class="script">Your next</p>
+          <h2 class="pink-big">friend</h2>
+          <p class="muted">is already in this room. Here's how you find them.</p>
+          <ol class="steps">
+            <li><span class="n">1</span><div><b>Scan the QR</b><small>No app, no sign-up. Opens in seconds.</small></div></li>
+            <li><span class="n">2</span><div><b>Answer 4 quick questions</b><small>Where you're from, last trip, a fun fact.</small></div></li>
+            <li><span class="n">3</span><div><b>Get a bingo card</b><small>Built from the real people in this room.</small></div></li>
+            <li><span class="n">4</span><div><b>Go say hi</b><small>Unlock each square with that person's 4-digit code.</small></div></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOIN -->
+    <section id="view-join" class="view" hidden>
+      <div class="wrap narrow">
+        <div class="center">
+          <p class="script">Room</p>
+          <h2 class="pink-big code-title" id="joinCode">----</h2>
+          <p id="joinHostNote" class="note" hidden>You're the host 🎉 Join first, then show the QR on your screen so others can scan it.</p>
+        </div>
+        <form id="formJoin" class="form" autocomplete="off">
+          <label class="field"><span>Your first name</span><input name="name" maxlength="20" required autocomplete="given-name" placeholder="e.g. Priya"></label>
+          <div class="field"><span>Pick your emoji</span><div id="emojiGrid" class="emoji-grid"></div></div>
+          <div id="qFields"></div>
+          <button class="btn btn-primary" type="submit">Get my bingo card <span class="chev">»</span></button>
+          <p class="tiny muted center">Only your first name and answers are shown, and only to people in this room. Rooms disappear after a few hours.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section id="view-game" class="view" hidden>
+      <div class="wrap game">
+        <div class="game-main">
+          <div class="me-bar">
+            <div class="me-id"><span id="meEmoji" class="big-emoji"></span><div><b id="meName"></b><small>Room <span id="gRoom"></span> · <span id="gCount"></span> playing</small></div></div>
+            <div class="mycode"><small>Your code</small><b id="meCode">----</b></div>
+          </div>
+          <p class="hint">👀 Find the people below and ask for their code. Show <b>your</b> code to anyone who finds you. Get 3 in a row for <b>BINGO</b>.</p>
+          <div id="grid" class="grid"></div>
+          <p class="progress" id="progText"></p>
+        </div>
+        <aside class="game-side">
+          <div class="panel invite">
+            <h3>Bring more people in</h3>
+            <p class="muted tiny">More people means better squares on everyone's card.</p>
+            <img id="qr" alt="QR code to join this room" width="200" height="200">
+            <p class="link" id="joinLink"></p>
+            <div class="row">
+              <button id="btnShare" class="btn btn-primary sm" type="button">Share link</button>
+              <a id="btnScreen" class="btn btn-outline sm" target="_blank" rel="noopener">Big screen</a>
+            </div>
+          </div>
+          <div class="panel"><h3>Leaderboard</h3><ol id="board" class="board"></ol></div>
+          <div class="panel"><h3>Live</h3><ul id="feed" class="feed"></ul></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- BIG SCREEN (TV / laptop in the common room) -->
+    <section id="view-screen" class="view" hidden>
+      <div class="screen">
+        <div class="screen-left">
+          <p class="script">scan to</p>
+          <h1 class="display"><span class="ink">SAY</span><span class="pink">HELLO</span></h1>
+          <img id="sQr" alt="QR code to join" width="360" height="360">
+          <p class="screen-code">Room <b id="sCode"></b></p>
+          <p class="muted" id="sLink"></p>
+        </div>
+        <div class="screen-right">
+          <div class="panel"><h3><span id="sCount">0</span> people playing</h3><ol id="sBoard" class="board"></ol></div>
+          <div class="panel"><h3>Live</h3><ul id="sFeed" class="feed"></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section id="view-stats" class="view" hidden>
+      <div class="wrap center">
+        <p class="script">so far</p>
+        <h2 class="pink-big">Real hellos</h2>
+        <div id="statsGrid" class="stats"></div>
+        <p class="muted tiny" id="statsSince"></p>
+      </div>
+    </section>
+  </main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <button class="close" id="modalClose" aria-label="Close" type="button">×</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
